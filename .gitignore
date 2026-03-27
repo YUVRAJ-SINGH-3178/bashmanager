@@ -18,3 +18,7 @@ env/
 # DevShell specifics
 favorites.json
 locks.json
+devshell/
+*.dat
+*.pak
+*.so
