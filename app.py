@@ -22,6 +22,10 @@ LOG_ROOT = os.path.join(BASE_DIR, 'logs')
 EXECUTION_LOG_DIR = os.path.join(LOG_ROOT, 'executions')
 HISTORY_FILE = os.path.join(LOG_ROOT, 'history.jsonl')
 FAILED_HISTORY_FILE = os.path.join(LOG_ROOT, 'failed.jsonl')
+SESSIONS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'sessions.json'
+)
 MAX_HISTORY_ENTRIES = 1000
 MAX_FAILED_HISTORY_ENTRIES = 500
 MAX_EXECUTION_LOG_FILES = 250
@@ -314,6 +318,18 @@ def load_locks():
 def save_locks(locks):
     with open(LOCKS_FILE, 'w') as f:
         json.dump(locks, f)
+
+
+def load_sessions():
+    if os.path.exists(SESSIONS_FILE):
+        with open(SESSIONS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
+def save_sessions(sessions):
+    with open(SESSIONS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(sessions, f, indent=2)
 
 
 def check_lock(rel_path, provided_pass):
