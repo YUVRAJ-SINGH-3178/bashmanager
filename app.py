@@ -903,17 +903,35 @@ def run_script():
                 )
                 yield f"data: {json.dumps({'type': 'metrics', 'resources': resource_info, 'exit_code': proc.returncode, 'success': proc.returncode == 0})}\n\n"
         except subprocess.TimeoutExpired:
+            was_aborted = False
+            with active_processes_lock:
+                entry = active_processes.get(run_id)
+                if entry and entry.get('aborted'):
+                    was_aborted = True
+
             if proc:
                 _terminate_process_tree(proc)
-            _append_execution_line(execution, 'error', '❌ Execution timed out')
-            _finalize_execution(
-                execution,
-                success=False,
-                exit_code=-1,
-                duration_seconds=time.time() - start_time,
-                error_message='Process timed out',
-            )
-            yield f"data: {json.dumps({'type': 'error', 'content': '❌ Execution timed out\n'})}\n\n"
+
+            if was_aborted:
+                _append_execution_line(execution, 'system', f'Script aborted (exit code {proc.returncode})')
+                _finalize_execution(
+                    execution,
+                    success=False,
+                    exit_code=proc.returncode if proc and proc.returncode is not None else -15,
+                    duration_seconds=time.time() - start_time,
+                    error_message='Script aborted by user',
+                )
+                yield f"data: {json.dumps({'type': 'aborted', 'run_id': run_id, 'content': 'Script aborted\n'})}\n\n"
+            else:
+                _append_execution_line(execution, 'error', '❌ Execution timed out')
+                _finalize_execution(
+                    execution,
+                    success=False,
+                    exit_code=-1,
+                    duration_seconds=time.time() - start_time,
+                    error_message='Process timed out',
+                )
+                yield f"data: {json.dumps({'type': 'error', 'content': '❌ Execution timed out\n'})}\n\n"
         except Exception as e:
             _append_execution_line(execution, 'error', f'❌ Execution Error: {str(e)}')
             if proc is not None and getattr(proc, 'returncode', None) is not None:
@@ -1200,10 +1218,6 @@ def import_github():
             )
             .replace("/blob/", "/")
         )
-
-    # Convert standard github url to raw
-    if "github.com" in url and "/blob/" in url:
-        url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 
     # SSRF guard: only allow GitHub domains after rewrite
     _parsed = urllib.parse.urlparse(url)

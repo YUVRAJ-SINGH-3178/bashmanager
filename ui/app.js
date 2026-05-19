@@ -291,9 +291,15 @@ async function abortScriptRun(termId = state.activeTerminalId) {
 
         if (!res.ok && res.status !== 404) {
             const data = await res.json().catch(() => ({}));
+            running.killSent = false;
+            running.aborting = false;
+            updateRunButton();
             notify(data.error || 'Failed to abort script.', 'error');
         }
     } catch (e) {
+        running.killSent = false;
+        running.aborting = false;
+        updateRunButton();
         notify(`Failed to abort script: ${e.message}`, 'error');
     }
 }
