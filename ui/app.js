@@ -2529,6 +2529,10 @@ function bindEvents() {
     const btnFav = document.getElementById('btn-fav');
     if (btnFav) btnFav.addEventListener('click', () => { if (state.activeScript) toggleFavorite(state.activeScript); });
 
+    const btnPR = document.getElementById('btn-pr');
+    if (btnPR) btnPR.addEventListener('click', () => { if (state.activeScript) raisePRFlow(state.activeScript); });
+    
+
     // Clear terminal
     document.getElementById('btn-clear').addEventListener('click', clearCli);
     document.getElementById('btn-close-detail').addEventListener('click', showWelcome);
